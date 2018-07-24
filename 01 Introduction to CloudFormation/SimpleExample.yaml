@@ -3,7 +3,29 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      ImageId: ami-467ca739 # Amazon Linux AMI in N.Virginia
+      ImageId: ami-0e86606d #ami-cfe4b2b0 # Amazon Linux AMI in N. California
+      KeyName: cloudformation
+      SecurityGroups:
+        - 'bellis-ec2-stack'
       Tags:
         - Key: Name
-          Value: A simple example
+          Value: tomcat-linux-newrelic
+
+  bellisSecurityGroup: 
+      Type: AWS::EC2::SecurityGroup
+      Properties: 
+        GroupName: bellis-ec2-stack
+        GroupDescription: Enable Appropriate ports for tomcat-http and ssh
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: '22'
+            ToPort: '22'
+            CidrIp: 0.0.0.0/0
+
+          - IpProtocol: tcp
+            FromPort: '8080'
+            ToPort: '8080'
+            CidrIp: 0.0.0.0/0
+        VpcId: vpc-1e1df77b
+
+  
