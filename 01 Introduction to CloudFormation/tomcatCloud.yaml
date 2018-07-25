@@ -1,0 +1,45 @@
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0e86606d  # Amazon Linux AMI in N. California
+      KeyName: cloudformation
+      IamInstanceProfile: 'S3EC2'
+      SecurityGroups:
+        - myNewSecurityCF
+      Tags:
+        - Key: Name
+          Value: tomcat-linux-newrelic
+      UserData: 
+        Fn::Base64:
+          |
+            #!/bin/bash
+            yum update -y
+            yum install -y tomcat8
+            yum install -y tomcat8-webapps tomcat8-admin-webapps 
+            cd /usr/share/tomcat8
+            aws s3 cp s3://tomcat.newrelic.artifacts/newrelic.zip newrelic.zip
+            aws s3 cp s3://tomcat.newrelic.artifacts/tomcat8.conf conf/tomcat8.conf
+            unzip newrelic.zip
+            chown -R tomcat:tomcat /usr/share/tomcat8/
+            service tomcat8 start
+            chkconfig --level 2345 tomcat8 on
+
+  myNewSecurityGroup: 
+      Type: AWS::EC2::SecurityGroup
+      Properties: 
+        GroupName: myNewSecurityCF
+        GroupDescription: Enable Appropriate ports for tomcat-http and ssh
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: '22'
+            ToPort: '22'
+            CidrIp: 0.0.0.0/0
+
+          - IpProtocol: tcp
+            FromPort: '8080'
+            ToPort: '8080'
+            CidrIp: 0.0.0.0/0
+        VpcId: vpc-1e1df77b
+  

@@ -3,29 +3,45 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      ImageId: ami-0e86606d #ami-cfe4b2b0 # Amazon Linux AMI in N. California
+      ImageId: ami-0e86606d  # Amazon Linux AMI in N. California
       KeyName: cloudformation
-      SecurityGroups:
-        - 'bellis-ec2-stack'
+      IamInstanceProfile: 'S3EC2'
+      SecurityGroupIds:
+        - sg-03c58f7b
       Tags:
         - Key: Name
           Value: tomcat-linux-newrelic
+      UserData: 
+        Fn::Base64:
+          |
+            #!/bin/bash
+            yum update -y
+            cd /home/ec2-user
+            wget http://mirrors.advancedhosters.com/apache/tomcat/tomcat-8/v8.5.32/bin/apache-tomcat-8.5.32.zip
+            unzip apache-tomcat-8.5.32.zip 
+            mv apache-tomcat-8.5.32 tomcat
+            rm -rf apache-tomcat-8.5.32.zip 
+            chown -R tomcat:tomcat tomcat
+            cd /home/ec2-user/tomcat
+            aws s3 cp s3://tomcat.newrelic.artifacts/newrelic.zip newrelic.zip
+            unzip newrelic.zip
+            aws s3 cp s3://tomcat.newrelic.artifacts/catalina.sh bin/catalina.sh        
+            /home/ec2-user/tomcat/bin/startup.sh
 
-  bellisSecurityGroup: 
-      Type: AWS::EC2::SecurityGroup
-      Properties: 
-        GroupName: bellis-ec2-stack
-        GroupDescription: Enable Appropriate ports for tomcat-http and ssh
-        SecurityGroupIngress:
-          - IpProtocol: tcp
-            FromPort: '22'
-            ToPort: '22'
-            CidrIp: 0.0.0.0/0
+  # cloudSecurityGroup: 
+  #     Type: AWS::EC2::SecurityGroup
+  #     Properties: 
+  #       GroupName: mySecurityCF
+  #       GroupDescription: Enable Appropriate ports for tomcat-http and ssh
+  #       SecurityGroupIngress:
+  #         - IpProtocol: tcp
+  #           FromPort: '22'
+  #           ToPort: '22'
+  #           CidrIp: 0.0.0.0/0
 
-          - IpProtocol: tcp
-            FromPort: '8080'
-            ToPort: '8080'
-            CidrIp: 0.0.0.0/0
-        VpcId: vpc-1e1df77b
-
+  #         - IpProtocol: tcp
+  #           FromPort: '8080'
+  #           ToPort: '8080'
+  #           CidrIp: 0.0.0.0/0
+  #       VpcId: vpc-1e1df77b
   
